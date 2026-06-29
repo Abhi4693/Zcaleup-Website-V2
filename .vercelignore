@@ -1,0 +1,8 @@
+# Local dev artifacts — not needed on Vercel
+.next
+node_modules
+.env*.local
+
+# Editor / OS
+.DS_Store
+*.log
