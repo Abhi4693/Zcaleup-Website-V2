@@ -19,9 +19,11 @@ export function ContactForm({
   mode = "contact",
 }: ContactFormProps) {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const data = new FormData(form);
@@ -48,11 +50,47 @@ export function ContactForm({
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      setFormError("");
       return;
     }
 
     setErrors({});
-    setSubmitted(true);
+    setFormError("");
+    setSubmitting(true);
+
+    try {
+      const payload = {
+        mode,
+        fullName: String(data.get("fullName") || ""),
+        companyName: String(data.get("companyName") || ""),
+        companyWebsite: String(data.get("companyWebsite") || ""),
+        workEmail: String(data.get("workEmail") || ""),
+        phone: String(data.get("phone") || ""),
+        industry: String(data.get("industry") || ""),
+        companySize: String(data.get("companySize") || ""),
+        requirements: String(data.get("requirements") || ""),
+      };
+
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = (await response.json().catch(() => ({}))) as { error?: string };
+
+      if (!response.ok) {
+        setFormError(result.error || "Failed to submit. Please try again.");
+        return;
+      }
+
+      setSubmitted(true);
+      form.reset();
+    } catch {
+      setFormError("Network error. Please check your connection and try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -87,6 +125,7 @@ export function ContactForm({
             autoComplete="name"
             placeholder="Your full name"
             className="form-input"
+            disabled={submitting}
           />
         </Field>
 
@@ -100,6 +139,7 @@ export function ContactForm({
                 autoComplete="organization"
                 placeholder="Your company name"
                 className="form-input"
+                disabled={submitting}
               />
             </Field>
             <Field label="Email" name="workEmail" required error={errors.workEmail}>
@@ -110,6 +150,7 @@ export function ContactForm({
                 autoComplete="email"
                 placeholder="you@company.com"
                 className="form-input"
+                disabled={submitting}
               />
             </Field>
             <Field label="Phone number" name="phone" required error={errors.phone}>
@@ -120,6 +161,7 @@ export function ContactForm({
                 autoComplete="tel"
                 placeholder="10–15 digit phone number"
                 className="form-input"
+                disabled={submitting}
               />
             </Field>
             <Field label="Message" name="requirements">
@@ -129,6 +171,7 @@ export function ContactForm({
                 rows={4}
                 placeholder="Goals, timelines, locations, integrations…"
                 className="form-input resize-none"
+                disabled={submitting}
               />
             </Field>
           </>
@@ -142,6 +185,7 @@ export function ContactForm({
                 autoComplete="url"
                 placeholder="https://"
                 className="form-input"
+                disabled={submitting}
               />
             </Field>
             <Field label="Work email" name="workEmail" required error={errors.workEmail}>
@@ -152,6 +196,7 @@ export function ContactForm({
                 autoComplete="email"
                 placeholder="you@company.com"
                 className="form-input"
+                disabled={submitting}
               />
             </Field>
             <Field label="Phone number" name="phone" required error={errors.phone}>
@@ -162,10 +207,17 @@ export function ContactForm({
                 autoComplete="tel"
                 placeholder="10-digit mobile number"
                 className="form-input"
+                disabled={submitting}
               />
             </Field>
             <Field label="Industry" name="industry" required error={errors.industry}>
-              <select id="industry" name="industry" className="form-input" defaultValue="">
+              <select
+                id="industry"
+                name="industry"
+                className="form-input"
+                defaultValue=""
+                disabled={submitting}
+              >
                 <option value="" disabled>
                   Select industry
                 </option>
@@ -177,7 +229,13 @@ export function ContactForm({
               </select>
             </Field>
             <Field label="Company size" name="companySize" required error={errors.companySize}>
-              <select id="companySize" name="companySize" className="form-input" defaultValue="">
+              <select
+                id="companySize"
+                name="companySize"
+                className="form-input"
+                defaultValue=""
+                disabled={submitting}
+              >
                 <option value="" disabled>
                   Select
                 </option>
@@ -195,13 +253,16 @@ export function ContactForm({
                 rows={4}
                 placeholder="Tell us about your business and what you're looking for..."
                 className="form-input resize-none"
+                disabled={submitting}
               />
             </Field>
           </>
         )}
 
-        <Button type="submit" className="w-full" size="lg">
-          {submitLabel}
+        {formError && <p className="text-sm text-red-500">{formError}</p>}
+
+        <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+          {submitting ? "Sending..." : submitLabel}
         </Button>
       </form>
     </div>

@@ -42,7 +42,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const classes = cn(
-    "group relative inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-300 overflow-hidden",
+    "group relative inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-300 overflow-hidden disabled:pointer-events-none disabled:opacity-60",
     variants[variant],
     sizes[size],
     className,
